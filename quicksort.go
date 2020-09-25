@@ -3,31 +3,31 @@ package main
 import "fmt"
 
 func main() {
-	x := []int{9, 8, 7, 6, 5, 4}
+	x := []int{82, 9, 90, 27, 37, 40, 24, 23, 96, 76, 88, 38, 28, 64, 57, 85, 7, 83, 95, 58, 39, 79, 6, 43, 92, 46, 20, 91, 51, 35, 68, 94, 52, 32, 93, 53, 98, 45, 84, 21, 14, 97, 74, 75, 2, 99, 49, 77, 60, 16}
+	// x := []int{1, 5, 3, 4, 2}
 	quicksorter(x, 0, len(x)-1)
 	fmt.Println(x)
 
 }
 func partition(list []int, left int, right int) int {
 	pivot := left
-	temp := left
 	left++
 	for left <= right {
-		for list[left] < list[pivot] && left < right {
+		for left <= right && list[left] < list[pivot] {
 			left++
 		}
-		for list[right] > list[pivot] && right > pivot {
+		for right >= left && list[right] > list[pivot] {
 			right--
 		}
-		if left <= right {
+		if left < right {
 			list[left], list[right] = list[right], list[left]
-			temp = left
+
 			left++
 			right--
 		}
 	}
-	list[temp], list[pivot] = list[pivot], list[temp]
-	return temp
+	list[pivot], list[left-1] = list[left-1], list[pivot]
+	return right
 }
 func quicksort() {
 
