@@ -43,6 +43,16 @@ func main() {
 		fmt.Println("quicksort: " + elapsed2.String())
 
 	}
+	var test []int
+	test=append(test,1)
+	test=append(test,4)
+	test=append(test,5)
+	test=append(test,3)
+	var x=make([]int,5)
+	copy(x,test[0:3])
+	x[0],x[1]=x[1],x[0]
+	fmt.Println(x)
+	fmt.Println(test)
 
 }
 func partition(list []int, left int, right int) int {
@@ -108,30 +118,28 @@ func goquicksort(list []int) {
 	//shuffling list to remove worst case complexity
 	// rand.Seed(time.Now().UnixNano())
 	// rand.Shuffle(len(list), func(i, j int) { list[i], list[j] = list[j], list[i] })
-	goquicksorter(list, 0, len(list)-1)
-
+	pivot:=gopartition(list,0,len(list)-1)
+	left:=list[0:pivot]
+	right:=list[pivot+1:len(list)]
+	var waiter sync.WaitGroup
+	waiter.Add(1)
+	go func(){
+		goquicksorter(left,0,len(left)-1)
+		waiter.Done()
+	}()
+	goquicksorter(right,0,len(right)-1)
+	waiter.Wait()
 }
 func goquicksorter(list []int, start int, end int) {
 	if start >= end || end <= 0 {
 		return
 	}
 	pivot := gopartition(list, start, end)
-	var waiter sync.WaitGroup
-	waiter.Add(2)
-	if start == 0 && end == len(list)-1 {
-		go func() {
-			goquicksorter(list, start, pivot-1)
-			waiter.Done()
-		}()
-		go func() {
-			goquicksorter(list, pivot+1, end)
-			waiter.Done()
-		}()
-		waiter.Wait()
-	} else {
-		goquicksorter(list, start, pivot-1)
-		goquicksorter(list, pivot+1, end)
-	}
+	
+	
+	goquicksorter(list, start, pivot-1)
+	goquicksorter(list, pivot+1, end)
+	
 
 }
 
