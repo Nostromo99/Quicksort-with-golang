@@ -31,28 +31,36 @@ func main() {
 	var elapsed time.Duration
 	var start2 time.Time
 	var elapsed2 time.Duration
+	var govar int64
+	var quickvar int64
+	govar=0
+	quickvar=0
 	for i := range matrix {
 		start = time.Now()
 		goquicksort(matrix[i])
 		elapsed = time.Since(start)
 		fmt.Println("go: " + elapsed.String())
+		govar+=elapsed.Nanoseconds()
 		// fmt.Println(matrix[i])
 		start2 = time.Now()
 		quicksort(matrix2[i])
 		elapsed2 = time.Since(start2)
 		fmt.Println("quicksort: " + elapsed2.String())
+		quickvar+=elapsed2.Nanoseconds()
 
 	}
-	var test []int
-	test=append(test,1)
-	test=append(test,4)
-	test=append(test,5)
-	test=append(test,3)
-	var x=make([]int,5)
-	copy(x,test[0:3])
-	x[0],x[1]=x[1],x[0]
-	fmt.Println(x)
-	fmt.Println(test)
+	fmt.Println("avg go:",govar/10,"nanoseconds")
+	fmt.Println("avg quicksort:",quickvar/10,"nanoseconds")
+	// var test []int
+	// test=append(test,1)
+	// test=append(test,4)
+	// test=append(test,5)
+	// test=append(test,3)
+	// var x=make([]int,5)
+	// copy(x,test[0:3])
+	// x[0],x[1]=x[1],x[0]
+	// fmt.Println(x)
+	// fmt.Println(test)
 
 }
 func partition(list []int, left int, right int) int {
@@ -135,12 +143,23 @@ func goquicksorter(list []int, start int, end int) {
 		return
 	}
 	pivot := gopartition(list, start, end)
-	
-	
 	goquicksorter(list, start, pivot-1)
 	goquicksorter(list, pivot+1, end)
 	
 
 }
+///alternate version(seems slower)
+// if sentinal{
+// 	var waiter sync.WaitGroup
+// 	waiter.Add(1)
+// 	go func(){
+// 		goquicksorter(list, start, pivot-1,false)
+// 		waiter.Done()
+// 	}()
+// 	goquicksorter(list, pivot+1, end,false)
+// 	waiter.Wait()
+// }else{
 
+// goquicksorter(list, start, pivot-1,false)
+// goquicksorter(list, pivot+1, end,false)}
 //TODO: try parralel mergesort
