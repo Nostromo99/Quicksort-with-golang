@@ -35,13 +35,15 @@ func main() {
 	var quickvar int64
 	govar=0
 	quickvar=0
+	// x := []int{1, 5, 3, 4, 2}
+	// goquicksort(x)
+	// fmt.Println(x)
 	for i := range matrix {
 		start = time.Now()
 		goquicksort(matrix[i])
 		elapsed = time.Since(start)
 		fmt.Println("go: " + elapsed.String())
 		govar+=elapsed.Nanoseconds()
-		// fmt.Println(matrix[i])
 		start2 = time.Now()
 		quicksort(matrix2[i])
 		elapsed2 = time.Since(start2)
@@ -49,18 +51,10 @@ func main() {
 		quickvar+=elapsed2.Nanoseconds()
 
 	}
-	fmt.Println("avg go:",govar/10,"nanoseconds")
-	fmt.Println("avg quicksort:",quickvar/10,"nanoseconds")
-	// var test []int
-	// test=append(test,1)
-	// test=append(test,4)
-	// test=append(test,5)
-	// test=append(test,3)
-	// var x=make([]int,5)
-	// copy(x,test[0:3])
-	// x[0],x[1]=x[1],x[0]
-	// fmt.Println(x)
-	// fmt.Println(test)
+	fmt.Println("avg go:",float64(govar)/10000000,"ms")
+	fmt.Println("avg quicksort:",float64(quickvar)/10000000,"ms")
+		
+
 
 }
 func partition(list []int, left int, right int) int {
@@ -102,9 +96,10 @@ func quicksorter(list []int, start int, end int) {
 //////////////////////////////////////////////////////////////////////////////
 
 func gopartition(list []int, left int, right int) int {
-
 	pivot := left
 	left++
+	
+
 	for left <= right {
 		for left <= right && list[left] <= list[pivot] {
 			left++
@@ -112,6 +107,8 @@ func gopartition(list []int, left int, right int) int {
 		for right >= left && list[right] >= list[pivot] {
 			right--
 		}
+	
+	
 		if left < right {
 			list[left], list[right] = list[right], list[left]
 
@@ -126,16 +123,28 @@ func goquicksort(list []int) {
 	//shuffling list to remove worst case complexity
 	// rand.Seed(time.Now().UnixNano())
 	// rand.Shuffle(len(list), func(i, j int) { list[i], list[j] = list[j], list[i] })
-	pivot:=gopartition(list,0,len(list)-1)
-	left:=list[0:pivot]
-	right:=list[pivot+1:len(list)]
+	pivot1:=gopartition(list,0,len(list)-1)
+	pivot2:=gopartition(list,0,pivot1-1)
+	pivot3:=gopartition(list,pivot1+1,len(list)-1)
+	q1:=list[0:pivot2]
+	q2:=list[pivot2:pivot1]
+	q3:=list[pivot1:pivot3]
+	q4:=list[pivot3:len(list)]
 	var waiter sync.WaitGroup
-	waiter.Add(1)
+	waiter.Add(3)
 	go func(){
-		goquicksorter(left,0,len(left)-1)
+		goquicksorter(q1,0,len(q1)-1)
 		waiter.Done()
 	}()
-	goquicksorter(right,0,len(right)-1)
+	go func(){
+		goquicksorter(q2,0,len(q2)-1)
+		waiter.Done()
+	}()
+	go func(){
+		goquicksorter(q3,0,len(q3)-1)
+		waiter.Done()
+	}()
+	goquicksorter(q4,0,len(q4)-1)
 	waiter.Wait()
 }
 func goquicksorter(list []int, start int, end int) {
