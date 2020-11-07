@@ -43,6 +43,7 @@ func main() {
 		goquicksort(matrix[i])
 		elapsed = time.Since(start)
 		fmt.Println("go: " + elapsed.String())
+		sortcheck(matrix[i])
 		govar += elapsed.Nanoseconds()
 		start2 = time.Now()
 		quicksort(matrix2[i])
@@ -53,7 +54,8 @@ func main() {
 	}
 	fmt.Println("avg go:", float64(govar)/10000000, "ms")
 	fmt.Println("avg quicksort:", float64(quickvar)/10000000, "ms")
-	fmt.Println("available cores: ",runtime.GOMAXPROCS(0))
+	fmt.Println("percentage difference:", float32((float64(quickvar)/10000000)/(float64(govar)/10000000)),"%")
+	fmt.Println("available cores: ", runtime.GOMAXPROCS(0))
 
 }
 func partition(list []int, left int, right int) int {
@@ -120,15 +122,7 @@ func goquicksort(list []int) {
 	// shuffling list to remove worst case complexity
 	// rand.Seed(time.Now().UnixNano())
 	// rand.Shuffle(len(list), func(i, j int) { list[i], list[j] = list[j], list[i] })
-	if runtime.GOMAXPROCS(0)>=8{
-		OctaCore(list)
-	}else if runtime.GOMAXPROCS(0)>=4{
-		Quadcore(list)
-	}else if runtime.GOMAXPROCS(0)>=4{
-		DualCore(list)
-	}else{
-		goquicksorter(list,0,len(list)-1)
-	}
+	goquicksorter(list, 0, len(list)-1)
 	
 
 }
@@ -137,108 +131,37 @@ func goquicksorter(list []int, start int, end int) {
 		return
 	}
 	pivot := gopartition(list, start, end)
-	goquicksorter(list, start, pivot-1)
-	goquicksorter(list, pivot+1, end)
-
-}
-func DualCore(list []int){
-	if len(list)<10{
-		goquicksorter(list,0,len(list)-1)
-		return
-	}
-	pivot:=gopartition(list,0,len(list)-1)
-	left:=list[0:pivot]
-	right:=list[pivot+1:len(list)]
 	var waiter sync.WaitGroup
-	waiter.Add(1)
-	go func(){
-		goquicksorter(left,0,len(left)-1)
-		waiter.Done()
-	}()
-	goquicksorter(right,0,len(right)-1)
-	waiter.Wait()
-}
-func Quadcore(list []int){
-	if len(list)<20{
-		DualCore(list)
-		return
+	if ((pivot - 1) - start) > 350 {
+		waiter.Add(1)
+		temp := list[start:pivot]
+		go func() {
+			goquicksorter(temp, 0, len(temp)-1)
+			waiter.Done()
+		}()
+	} else {
+		goquicksorter(list, start, pivot-1)
 	}
-	pivot1:=gopartition(list,0,len(list)-1)
-	pivot2:=gopartition(list,0,pivot1-1)
-	pivot3:=gopartition(list,pivot1+1,len(list)-1)
-	q1:=list[0:pivot2]
-	q2:=list[pivot2:pivot1]
-	q3:=list[pivot1:pivot3]
-	q4:=list[pivot3:len(list)]
-	var waiter sync.WaitGroup
-	waiter.Add(3)
-	go func(){
-		goquicksorter(q1,0,len(q1)-1)
-		waiter.Done()
-	}()
-	go func(){
-		goquicksorter(q2,0,len(q2)-1)
-		waiter.Done()
-	}()
-	go func(){
-		goquicksorter(q3,0,len(q3)-1)
-		waiter.Done()
-	}()
-	goquicksorter(q4,0,len(q4)-1)
-	waiter.Wait()
-}
-func OctaCore(list []int){
-	if len(list)<20{
-		DualCore(list)
-		return
+	if (end - pivot + 1) > 350 {
+		waiter.Add(1)
+		temp := list[pivot+1 : end+1]
+		go func() {
+			goquicksorter(temp, 0, len(temp)-1)
+			waiter.Done()
+		}()
+	} else {
+		goquicksorter(list, pivot+1, end)
 	}
-	pivot1 := gopartition(list, 0, len(list)-1)
-	pivot2 := gopartition(list, 0, pivot1-1)
-	pivot3 := gopartition(list, pivot1+1, len(list)-1)
-	pivot4:=gopartition(list,0,pivot2-1)
-	pivot5:=gopartition(list,pivot2+1,pivot1-1)
-	pivot6:=gopartition(list,pivot1+1,pivot3-1)
-	pivot7:=gopartition(list,pivot3+1,len(list)-1)
-	q1:=list[0:pivot4]
-	q2:=list[pivot4+1:pivot2]
-	q3:=list[pivot2+1:pivot5]
-	q4:=list[pivot5+1:pivot1]
-	q5:=list[pivot1+1:pivot6]
-	q6:=list[pivot6+1:pivot3]
-	q7:=list[pivot3+1:pivot7]
-	q8:=list[pivot7+1:len(list)]
-	var waiter sync.WaitGroup
-	waiter.Add(7)
-	go func() {
-		goquicksorter(q1, 0, len(q1)-1)
-		waiter.Done()
-	}()
-	go func() {
-		goquicksorter(q2, 0, len(q2)-1)
-		waiter.Done()
-	}()
-	go func() {
-		goquicksorter(q3, 0, len(q3)-1)
-		waiter.Done()
-	}()
-	go func() {
-		goquicksorter(q4, 0, len(q4)-1)
-		waiter.Done()
-	}()
-	go func() {
-		goquicksorter(q5, 0, len(q5)-1)
-		waiter.Done()
-	}()
-	go func() {
-		goquicksorter(q6, 0, len(q6)-1)
-		waiter.Done()
-	}()
-	go func() {
-		goquicksorter(q7, 0, len(q7)-1)
-		waiter.Done()
-	}()
-	goquicksorter(q8, 0, len(q8)-1)
 	waiter.Wait()
 
 }
 
+func sortcheck(list []int) {
+	for i := 0; i < len(list)-2; i++ {
+		if list[i] > list[i+1] {
+			fmt.Println("sorting error")
+			fmt.Println(i)
+		}
+	}
+
+}
